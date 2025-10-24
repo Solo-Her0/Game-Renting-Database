@@ -1,0 +1,44 @@
+CREATE database GameLibrary;
+
+USE GameLibrary;
+
+CREATE TABLE Users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(100),
+    full_name VARCHAR(100),
+    is_admin BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE Games (
+    game_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    overview TEXT,
+    rating VARCHAR(10),
+    developer VARCHAR(50),
+    publisher VARCHAR(50),
+    quantity_available INT DEFAULT 1 CHECK (quantity_available >= 0)
+);
+
+CREATE TABLE Rentals (
+    rental_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    game_id INT NOT NULL,
+    rented_on DATETIME DEFAULT CURRENT_TIMESTAMP,
+    due_date DATETIME,
+    returned_on DATETIME,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (game_id) REFERENCES Games(game_id) ON DELETE CASCADE
+);
+
+DELIMITER //
+CREATE TRIGGER set_due_date BEFORE INSERT ON Rentals
+FOR EACH ROW
+BEGIN
+    IF NEW.due_date IS NULL THEN
+        SET NEW.due_date = DATE_ADD(NEW.rented_on, INTERVAL 7 DAY);
+    END IF;
+END;
+//
+DELIMITER ;
